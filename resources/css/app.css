@@ -1,0 +1,46 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../views/**/*.blade.php';
+
+@theme {
+    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --color-bg-primary: #0B0D17;
+    --color-bg-secondary: #121525;
+    --color-bg-card: #1A1E30;
+    --color-bg-card-hover: #242943;
+    --color-brand: #7C4DFF;
+    --color-brand-light: #A78BFA;
+    --color-accent: #38BDF8;
+    --color-success: #22C55E;
+    --color-warning: #FBBF24;
+    --color-danger: #F87171;
+    --color-text-primary: #F8FAFC;
+    --color-text-secondary: #AAB2C5;
+    --color-border-subtle: #30364D;
+}
+
+@layer base {
+    html {
+        background-color: #0B0D17;
+        color: #F8FAFC;
+        scroll-behavior: smooth;
+    }
+
+    body {
+        background-color: #0B0D17;
+        color: #F8FAFC;
+        font-family: var(--font-sans);
+        overflow-x: clip;
+    }
+
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+        outline: 2px solid #A78BFA;
+        outline-offset: 2px;
+    }
+}
