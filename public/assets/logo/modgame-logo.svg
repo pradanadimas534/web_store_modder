@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#B6FF4A"/><stop offset="1" stop-color="#55D600"/></linearGradient></defs>
+<path d="M18 90 34 24h22l22 34 22-34h22l16 66h-24l-8-39-22 34H65L43 51l-2 39Z" fill="url(#g)"/>
+<text x="160" y="67" font-family="Inter,Arial,sans-serif" font-size="48" font-weight="800" fill="#F2F5F0">ModGame.id</text>
+<text x="163" y="96" font-family="Inter,Arial,sans-serif" font-size="17" letter-spacing="1.4" fill="#A0AAA2">GAME MOD &amp; DIGITAL MARKETPLACE</text>
+</svg>

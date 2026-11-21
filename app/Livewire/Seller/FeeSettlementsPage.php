@@ -12,32 +12,66 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
-use Livewire\Attributes\Validate;
 use Livewire\Component;
-use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
 #[Title('Setoran Biaya Admin')]
 class FeeSettlementsPage extends Component
 {
-    use WithFileUploads;
     use WithPagination;
 
-    #[Validate('required|image|mimes:jpg,jpeg,png,webp|max:4096', message: 'Bukti transfer setoran biaya admin wajib diunggah (JPG, PNG, atau WEBP maks 4 MB).')]
-    public $paymentProof = null;
+    public bool $showPaymentGateway = false;
 
-    #[Validate('nullable|string|max:300')]
-    public string $paymentNote = '';
+    public int|string $paymentAmount = '';
 
-    public function submitSettlement(): void
+    public function openPaymentGateway(): void
     {
-        $this->validate();
+        $unsettledTotal = Auth::user()->unsettledAdminFeeTotal();
+        if ($unsettledTotal <= 0) {
+            return;
+        }
+
+        $this->resetErrorBag('paymentAmount');
+        $this->paymentAmount = '';
+        $this->showPaymentGateway = true;
+    }
+
+    public function closePaymentGateway(): void
+    {
+        $this->resetErrorBag('paymentAmount');
+        $this->reset(['showPaymentGateway', 'paymentAmount']);
+    }
+
+    public function paySettlement(): void
+    {
+        $this->validate([
+            'paymentAmount' => ['required', 'integer', 'min:1'],
+        ], [
+            'paymentAmount.required' => 'Masukkan nominal pembayaran terlebih dahulu.',
+            'paymentAmount.integer' => 'Nominal pembayaran harus berupa angka.',
+        ]);
 
         $sellerId = Auth::id();
-        $proofPath = $this->paymentProof->store('settlement-proofs', 'local');
+        $enteredAmount = (int) $this->paymentAmount;
+        $expectedTotal = Auth::user()->unsettledAdminFeeTotal();
 
-        $settlement = DB::transaction(function () use ($sellerId, $proofPath): ?SellerFeeSettlement {
+        if ($expectedTotal <= 0) {
+            $this->addError('paymentAmount', 'Tidak ada tagihan biaya admin yang perlu dibayar saat ini.');
+
+            return;
+        }
+
+        if ($enteredAmount !== $expectedTotal) {
+            $this->addError(
+                'paymentAmount',
+                'Nominal pembayaran harus tepat sesuai tagihan sebesar Rp '.number_format($expectedTotal, 0, ',', '.').'.'
+            );
+
+            return;
+        }
+
+        $settlement = DB::transaction(function () use ($sellerId): ?SellerFeeSettlement {
             $unsettledOrders = Order::query()
                 ->where('seller_id', $sellerId)
                 ->where('status', OrderStatus::Completed)
@@ -51,16 +85,18 @@ class FeeSettlementsPage extends Component
             }
 
             $totalAmount = (int) $unsettledOrders->sum('admin_fee');
+            $now = now();
 
             $settlement = SellerFeeSettlement::create([
                 'settlement_number' => SellerFeeSettlement::generateSettlementNumber(),
                 'seller_id' => $sellerId,
                 'amount' => $totalAmount,
                 'orders_count' => $unsettledOrders->count(),
-                'status' => SellerSettlementStatus::PendingVerification,
-                'payment_proof_path' => $proofPath,
-                'payment_note' => $this->paymentNote !== '' ? $this->paymentNote : null,
-                'submitted_at' => now(),
+                'status' => SellerSettlementStatus::Verified,
+                'payment_proof_path' => null,
+                'payment_note' => 'Pembayaran langsung ke akun Admin',
+                'submitted_at' => $now,
+                'verified_at' => $now,
             ]);
 
             Order::query()
@@ -71,13 +107,16 @@ class FeeSettlementsPage extends Component
         });
 
         if (! $settlement) {
-            $this->addError('paymentProof', 'Tidak ada tagihan biaya admin yang perlu disetorkan saat ini.');
+            $this->addError('paymentAmount', 'Tidak ada tagihan biaya admin yang perlu dibayar.');
 
             return;
         }
 
-        $this->reset(['paymentProof', 'paymentNote']);
-        session()->flash('status', "Setoran {$settlement->settlement_number} sebesar Rp ".number_format($settlement->amount, 0, ',', '.').' berhasil dikirim untuk verifikasi admin.');
+        $this->closePaymentGateway();
+        session()->flash(
+            'status',
+            "Transaksi berhasil! Setoran {$settlement->settlement_number} sebesar Rp ".number_format($settlement->amount, 0, ',', '.').' langsung masuk ke akun Admin dan status setoran Anda telah Lunas.'
+        );
     }
 
     public function render(): View

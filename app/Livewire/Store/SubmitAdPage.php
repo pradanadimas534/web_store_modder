@@ -46,8 +46,9 @@ class SubmitAdPage extends Component
     #[Validate('nullable|image|mimes:jpg,jpeg,png,webp|max:2048')]
     public $banner = null;
 
-    #[Validate('required|image|mimes:jpg,jpeg,png,webp|max:4096', message: 'Bukti pembayaran iklan wajib diunggah (JPG, PNG, atau WEBP maks 4 MB).')]
-    public $paymentProof = null;
+    public bool $showPaymentGateway = false;
+
+    public int|string $paymentAmount = '';
 
     public bool $submitted = false;
 
@@ -58,6 +59,20 @@ class SubmitAdPage extends Component
             $this->advertiser_name = $user->name;
             $this->advertiser_email = $user->email;
         }
+    }
+
+    public function openPaymentGateway(): void
+    {
+        $this->validate();
+        $this->resetErrorBag('paymentAmount');
+        $this->paymentAmount = '';
+        $this->showPaymentGateway = true;
+    }
+
+    public function closePaymentGateway(): void
+    {
+        $this->resetErrorBag('paymentAmount');
+        $this->reset(['showPaymentGateway', 'paymentAmount']);
     }
 
     public function submitAd(): void
@@ -75,8 +90,23 @@ class SubmitAdPage extends Component
         $placementEnum = AdPlacement::from($this->placement);
         $pricing = PlatformSetting::current()->calculateAdTotal($placementEnum);
 
+        if ((string) $this->paymentAmount === '' || ! is_numeric($this->paymentAmount)) {
+            $this->addError('paymentAmount', 'Masukkan nominal pembayaran iklan terlebih dahulu.');
+
+            return;
+        }
+
+        if ((int) $this->paymentAmount !== $pricing['total_price']) {
+            $this->addError(
+                'paymentAmount',
+                'Nominal pembayaran harus tepat sesuai total tagihan iklan sebesar Rp '.number_format($pricing['total_price'], 0, ',', '.').'.'
+            );
+
+            return;
+        }
+
         $bannerPath = $this->banner ? $this->banner->store('ads', 'public') : null;
-        $proofPath = $this->paymentProof ? $this->paymentProof->store('ad-payment-proofs', 'local') : null;
+        $now = now();
 
         Ad::create([
             'advertiser_id' => Auth::id(),
@@ -91,15 +121,16 @@ class SubmitAdPage extends Component
             'slot_price' => $pricing['slot_price'],
             'admin_fee' => $pricing['admin_fee'],
             'total_price' => $pricing['total_price'],
-            'payment_status' => $proofPath ? AdPaymentStatus::PendingVerification : AdPaymentStatus::Unpaid,
-            'payment_proof_path' => $proofPath,
-            'paid_at' => $proofPath ? now() : null,
-            'status' => AdStatus::Pending,
+            'payment_status' => AdPaymentStatus::Paid,
+            'payment_proof_path' => null,
+            'paid_at' => $now,
+            'verified_at' => $now,
+            'status' => AdStatus::Active,
         ]);
 
         RateLimiter::hit($key, 3600);
 
-        $this->reset(['title', 'description', 'target_url', 'banner', 'paymentProof']);
+        $this->reset(['title', 'description', 'target_url', 'banner', 'showPaymentGateway', 'paymentAmount']);
         $this->cta_text = 'Kunjungi';
         $this->submitted = true;
     }

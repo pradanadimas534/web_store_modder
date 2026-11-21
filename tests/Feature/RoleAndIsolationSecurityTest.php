@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\PricingType;
 use App\Enums\ProductStatus;
 use App\Enums\UserRole;
+use App\Livewire\Admin\CatalogMasterPage;
 use App\Livewire\Admin\ProductsPage as AdminProductsPage;
 use App\Livewire\Admin\UsersPage as AdminUsersPage;
 use App\Livewire\Auth\LoginPage;
@@ -133,5 +134,20 @@ class RoleAndIsolationSecurityTest extends TestCase
             ->set('password', 'secret12345')
             ->call('authenticate')
             ->assertHasErrors('email');
+
+        // Admin can dynamically add new games and categories
+        Livewire::actingAs($admin)
+            ->test(CatalogMasterPage::class)
+            ->set('gameName', 'Cyberpunk 2077')
+            ->set('gameShortCode', 'CP2077')
+            ->set('gameCoverPath', 'assets/game-covers/open-world.svg')
+            ->call('addGame')
+            ->assertHasNoErrors()
+            ->set('categoryName', 'Shader & Reshade')
+            ->call('addCategory')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('games', ['slug' => 'cyberpunk-2077', 'short_code' => 'CP2077']);
+        $this->assertDatabaseHas('categories', ['slug' => 'shader-reshade']);
     }
 }

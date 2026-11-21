@@ -30,6 +30,10 @@ class OrderPaymentPage extends Component
 
     public string $sellerNote = '';
 
+    public bool $showApproveModal = false;
+
+    public bool $showRejectModal = false;
+
     public string $rejectReason = '';
 
     public function mount(string $orderNumber): void
@@ -68,11 +72,24 @@ class OrderPaymentPage extends Component
         session()->flash('status', 'Bukti pembayaran berhasil diunggah. Menunggu verifikasi dari modder.');
     }
 
+    public function openApproveModal(): void
+    {
+        Gate::authorize('verify', $this->order);
+        $this->showApproveModal = true;
+    }
+
+    public function closeApproveModal(): void
+    {
+        $this->showApproveModal = false;
+    }
+
     public function approveOrder(): void
     {
         Gate::authorize('verify', $this->order);
 
         if ($this->order->status !== OrderStatus::PendingVerification) {
+            $this->showApproveModal = false;
+
             return;
         }
 
@@ -83,8 +100,23 @@ class OrderPaymentPage extends Component
             'rejection_reason' => null,
         ]);
 
+        $this->showApproveModal = false;
         $this->order->refresh()->load(['items.product', 'seller.sellerProfile', 'buyer', 'verifier']);
         session()->flash('status', "Pesanan {$this->order->order_number} berhasil diverifikasi. Akses unduhan pembeli kini aktif.");
+    }
+
+    public function openRejectModal(): void
+    {
+        Gate::authorize('verify', $this->order);
+        $this->resetErrorBag('rejectReason');
+        $this->rejectReason = '';
+        $this->showRejectModal = true;
+    }
+
+    public function closeRejectModal(): void
+    {
+        $this->resetErrorBag('rejectReason');
+        $this->reset(['showRejectModal', 'rejectReason']);
     }
 
     public function rejectOrder(): void
@@ -92,6 +124,8 @@ class OrderPaymentPage extends Component
         Gate::authorize('verify', $this->order);
 
         if ($this->order->status !== OrderStatus::PendingVerification) {
+            $this->closeRejectModal();
+
             return;
         }
 
@@ -109,7 +143,7 @@ class OrderPaymentPage extends Component
             'verified_by' => Auth::id(),
         ]);
 
-        $this->rejectReason = '';
+        $this->closeRejectModal();
         $this->order->refresh()->load(['items.product', 'seller.sellerProfile', 'buyer', 'verifier']);
         session()->flash('status', "Bukti pembayaran untuk {$this->order->order_number} ditolak.");
     }

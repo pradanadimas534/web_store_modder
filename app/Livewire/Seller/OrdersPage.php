@@ -20,7 +20,13 @@ class OrdersPage extends Component
 
     public string $statusFilter = '';
 
+    public ?int $approvingOrderId = null;
+
+    public string $approvingOrderNumber = '';
+
     public ?int $rejectingOrderId = null;
+
+    public string $rejectingOrderNumber = '';
 
     public string $rejectReason = '';
 
@@ -29,12 +35,33 @@ class OrdersPage extends Component
         $this->resetPage();
     }
 
-    public function approveOrder(int $orderId): void
+    public function openApproveModal(int $orderId): void
     {
         $order = Order::query()->findOrFail($orderId);
         Gate::authorize('verify', $order);
 
+        $this->approvingOrderId = $order->id;
+        $this->approvingOrderNumber = $order->order_number;
+    }
+
+    public function closeApproveModal(): void
+    {
+        $this->reset(['approvingOrderId', 'approvingOrderNumber']);
+    }
+
+    public function approveOrder(?int $orderId = null): void
+    {
+        $targetId = $orderId ?? $this->approvingOrderId;
+        if ($targetId === null) {
+            return;
+        }
+
+        $order = Order::query()->findOrFail($targetId);
+        Gate::authorize('verify', $order);
+
         if ($order->status !== OrderStatus::PendingVerification) {
+            $this->closeApproveModal();
+
             return;
         }
 
@@ -45,6 +72,7 @@ class OrdersPage extends Component
             'rejection_reason' => null,
         ]);
 
+        $this->closeApproveModal();
         session()->flash('status', "Pesanan {$order->order_number} berhasil diverifikasi. Akses unduhan pembeli kini aktif.");
     }
 
@@ -56,12 +84,13 @@ class OrdersPage extends Component
         $this->resetErrorBag('rejectReason');
         $this->rejectReason = '';
         $this->rejectingOrderId = $order->id;
+        $this->rejectingOrderNumber = $order->order_number;
     }
 
     public function closeRejectModal(): void
     {
         $this->resetErrorBag('rejectReason');
-        $this->reset(['rejectingOrderId', 'rejectReason']);
+        $this->reset(['rejectingOrderId', 'rejectingOrderNumber', 'rejectReason']);
     }
 
     public function rejectOrder(): void

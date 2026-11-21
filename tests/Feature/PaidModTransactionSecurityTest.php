@@ -201,4 +201,51 @@ class PaidModTransactionSecurityTest extends TestCase
             ->assertOk()
             ->assertSee('Password arsip mod: nusantara2026');
     }
+
+    public function test_seller_can_reject_order_via_modal_with_reason(): void
+    {
+        $seller = User::factory()->create(['role' => UserRole::Seller]);
+        $buyer = User::factory()->create(['role' => UserRole::User]);
+
+        $order = Order::create([
+            'order_number' => Order::generateOrderNumber(),
+            'buyer_id' => $buyer->id,
+            'seller_id' => $seller->id,
+            'payment_method_snapshot' => ['provider_name' => 'BCA'],
+            'subtotal' => 50000,
+            'admin_fee' => 4500,
+            'total' => 54500,
+            'seller_net_amount' => 50000,
+            'status' => OrderStatus::PendingVerification,
+            'payment_proof_path' => 'payment-proofs/sample.jpg',
+        ]);
+
+        Livewire::actingAs($seller)
+            ->test(SellerOrdersPage::class)
+            ->call('openRejectModal', $order->id)
+            ->assertSet('rejectingOrderId', $order->id)
+            ->call('rejectOrder')
+            ->assertHasErrors('rejectReason')
+            ->set('rejectReason', 'Nominal transfer kurang Rp 4.500')
+            ->call('rejectOrder')
+            ->assertHasNoErrors()
+            ->assertSet('rejectingOrderId', null);
+
+        $order->refresh();
+        $this->assertSame(OrderStatus::Rejected, $order->status);
+        $this->assertSame('Nominal transfer kurang Rp 4.500', $order->rejection_reason);
+
+        // Reset to pending_verification and test two-step approve modal flow
+        $order->update(['status' => OrderStatus::PendingVerification]);
+
+        Livewire::actingAs($seller)
+            ->test(SellerOrdersPage::class)
+            ->call('openApproveModal', $order->id)
+            ->assertSet('approvingOrderId', $order->id)
+            ->call('approveOrder')
+            ->assertHasNoErrors()
+            ->assertSet('approvingOrderId', null);
+
+        $this->assertSame(OrderStatus::Completed, $order->fresh()->status);
+    }
 }

@@ -11,6 +11,7 @@ use App\Livewire\Account\OrderPaymentPage;
 use App\Livewire\Account\OrdersPage as BuyerOrdersPage;
 use App\Livewire\Account\WishlistPage;
 use App\Livewire\Admin\AdsPage as AdminAdsPage;
+use App\Livewire\Admin\CatalogMasterPage as AdminCatalogMasterPage;
 use App\Livewire\Admin\DashboardPage as AdminDashboardPage;
 use App\Livewire\Admin\FeeSettlementsPage as AdminFeeSettlementsPage;
 use App\Livewire\Admin\OrdersPage as AdminOrdersPage;
@@ -88,6 +89,7 @@ Route::prefix('admin')
     ->group(function () {
         Route::livewire('/dashboard', AdminDashboardPage::class)->name('dashboard');
         Route::livewire('/pengguna', AdminUsersPage::class)->name('users');
+        Route::livewire('/game-kategori', AdminCatalogMasterPage::class)->name('catalog-master');
         Route::livewire('/produk', AdminProductsPage::class)->name('products');
         Route::livewire('/transaksi', AdminOrdersPage::class)->name('orders');
         Route::livewire('/setoran', AdminFeeSettlementsPage::class)->name('settlements');

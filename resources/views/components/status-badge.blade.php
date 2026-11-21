@@ -5,10 +5,10 @@
     $text = $label ?? (is_object($status) && method_exists($status, 'label') ? $status->label() : ucfirst(str_replace('_', ' ', $value)));
 
     $classes = match ($value) {
-        'active', 'completed', 'free', 'verified' => 'border-[#22C55E]/40 bg-[#22C55E]/15 text-[#22C55E]',
-        'pending', 'pending_review', 'pending_payment', 'pending_verification', 'paid', 'unpaid' => 'border-[#FBBF24]/40 bg-[#FBBF24]/15 text-[#FBBF24]',
-        'rejected', 'cancelled', 'disabled' => 'border-[#F87171]/40 bg-[#F87171]/15 text-[#F87171]',
-        default => 'border-[#30364D] bg-[#1A1E30] text-[#AAB2C5]',
+        'active', 'completed', 'free', 'verified' => 'border-[#35D07F]/40 bg-[#35D07F]/15 text-[#35D07F]',
+        'pending', 'pending_review', 'pending_payment', 'pending_verification', 'paid', 'unpaid' => 'border-[#F5C451]/40 bg-[#F5C451]/15 text-[#F5C451]',
+        'rejected', 'cancelled', 'disabled' => 'border-[#FF6262]/40 bg-[#FF6262]/15 text-[#FF6262]',
+        default => 'border-[#29342D] bg-[#151D19] text-[#A0AAA2]',
     };
 @endphp
 

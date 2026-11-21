@@ -1,7 +1,7 @@
 @props(['product'])
 
-<article class="group flex flex-col overflow-hidden rounded-2xl border border-[#30364D] bg-[#1A1E30] transition-colors duration-200 hover:border-[#7C4DFF]/60 hover:bg-[#242943]">
-    <a href="{{ route('products.show', $product->slug) }}" class="relative block aspect-[16/10] w-full overflow-hidden bg-[#121525]">
+<article class="group flex flex-col overflow-hidden rounded-2xl border border-[#29342D] bg-[#151D19] transition-colors duration-200 hover:border-[#7CFF00]/60 hover:bg-[#1C2721]">
+    <a href="{{ route('products.show', $product->slug) }}" class="relative block aspect-[16/10] w-full overflow-hidden bg-[#101614]">
         @if ($product->thumbnail_path)
             <img
                 src="{{ asset('storage/'.$product->thumbnail_path) }}"
@@ -10,67 +10,67 @@
                 class="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
             >
         @else
-            <div class="flex h-full w-full flex-col items-center justify-center px-4 text-center">
-                <span class="text-xs font-semibold tracking-wider text-[#A78BFA]">{{ $product->game?->short_code ?? 'MOD' }}</span>
-                <span class="mt-1 line-clamp-2 text-sm font-bold text-[#F8FAFC]">{{ $product->name }}</span>
-            </div>
+            <img
+                src="{{ $product->game?->coverUrl() ?? asset('assets/game-covers/open-world.svg') }}"
+                alt="{{ $product->name }}"
+                loading="lazy"
+                class="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+            >
         @endif
 
         <div class="absolute left-3 top-3 flex flex-wrap gap-1.5">
-            <span class="rounded-lg border border-[#30364D] bg-[#0B0D17]/90 px-2.5 py-1 text-xs font-semibold text-[#F8FAFC]">
+            <span class="rounded-lg border border-[#29342D] bg-[#080B0A]/90 px-2.5 py-1 text-xs font-bold text-[#F2F5F0]">
                 {{ $product->game?->short_code ?? 'MOD' }}
             </span>
             @if ($product->isFree())
-                <span class="rounded-lg border border-[#22C55E]/40 bg-[#0B0D17]/90 px-2.5 py-1 text-xs font-semibold text-[#22C55E]">
+                <span class="rounded-lg border border-[#35D07F]/40 bg-[#080B0A]/90 px-2.5 py-1 text-xs font-bold text-[#35D07F]">
                     Gratis
                 </span>
-            @else
-                <span class="rounded-lg border border-[#FBBF24]/40 bg-[#0B0D17]/90 px-2.5 py-1 text-xs font-semibold text-[#FBBF24]">
-                    Berbayar
+            @elseif ($product->promo_price && $product->promo_price < $product->price)
+                <span class="rounded-lg border border-[#7CFF00]/40 bg-[#080B0A]/90 px-2.5 py-1 text-xs font-bold text-[#7CFF00]">
+                    Promo
                 </span>
             @endif
         </div>
     </a>
 
     <div class="flex flex-1 flex-col p-4">
-        <div class="flex items-center justify-between gap-2 text-xs text-[#AAB2C5]">
-            <span>{{ $product->category?->name }}</span>
-            <span>v{{ $product->mod_version }}</span>
-        </div>
-
-        <h3 class="mt-1.5 line-clamp-1 text-base font-bold text-[#F8FAFC]">
-            <a href="{{ route('products.show', $product->slug) }}" class="hover:text-[#A78BFA]">
+        <h3 class="font-display line-clamp-1 text-base font-bold text-[#F2F5F0]">
+            <a href="{{ route('products.show', $product->slug) }}" class="hover:text-[#7CFF00]">
                 {{ $product->name }}
             </a>
         </h3>
 
-        <p class="mt-1 line-clamp-2 text-sm text-[#AAB2C5]">
-            {{ $product->short_description }}
+        <p class="mt-1 line-clamp-1 text-xs font-medium text-[#A0AAA2]">
+            {{ $product->category?->name }} &middot; {{ $product->compatible_game_version }}
         </p>
 
-        <div class="mt-3 text-xs text-[#AAB2C5]">
-            Kompatibel: <span class="font-medium text-[#F8FAFC]">{{ $product->compatible_game_version }}</span>
+        <div class="mt-2.5 flex items-center justify-between text-xs text-[#A0AAA2]">
+            <span>v{{ $product->mod_version }}</span>
+            <span>{{ number_format($product->downloads_count) }} unduhan</span>
         </div>
 
-        <div class="mt-auto flex items-center justify-between gap-3 border-t border-[#30364D] pt-3.5">
+        <div class="mt-auto flex items-center justify-between gap-3 border-t border-[#29342D] pt-3.5">
             <div>
                 @if ($product->isFree())
-                    <p class="text-base font-extrabold text-[#22C55E]">Gratis</p>
+                    <p class="font-display text-lg font-extrabold text-[#7CFF00]">Gratis</p>
                 @else
                     @if ($product->promo_price && $product->promo_price < $product->price)
-                        <p class="text-xs text-[#AAB2C5] line-through">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
-                        <p class="text-base font-extrabold text-[#F8FAFC]">Rp {{ number_format($product->promo_price, 0, ',', '.') }}</p>
+                        <p class="text-[11px] text-[#A0AAA2] line-through">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
+                        <p class="font-display text-lg font-extrabold text-[#F2F5F0]">Rp {{ number_format($product->promo_price, 0, ',', '.') }}</p>
                     @else
-                        <p class="text-base font-extrabold text-[#F8FAFC]">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
+                        <p class="font-display text-lg font-extrabold text-[#F2F5F0]">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
                     @endif
                 @endif
             </div>
 
             <a
                 href="{{ route('products.show', $product->slug) }}"
-                class="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-[#7C4DFF] px-4 py-2 text-sm font-semibold text-white transition-colors duration-200 hover:bg-[#6D3DF5]"
+                aria-label="{{ $product->isFree() ? 'Unduh '.$product->name : 'Lihat detail '.$product->name }}"
+                class="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-[10px] border border-[#7CFF00]/50 bg-[#101614] px-3.5 py-2 text-xs font-bold text-[#7CFF00] transition-colors duration-200 hover:bg-[#7CFF00] hover:text-[#080B0A]"
             >
-                {{ $product->isFree() ? 'Unduh' : 'Detail' }}
+                <img src="{{ asset($product->isFree() ? 'assets/icons/download.svg' : 'assets/icons/cart.svg') }}" alt="" class="h-4 w-4">
+                <span>{{ $product->isFree() ? 'Unduh' : 'Detail' }}</span>
             </a>
         </div>
     </div>
